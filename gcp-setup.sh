@@ -19,7 +19,7 @@ read -p "Enter the GCP Project ID to Audit: " PROJECT_ID
 gcloud config set project $PROJECT_ID
 
 echo "🔄 Enabling required Google Cloud APIs..."
-gcloud services enable cloudresourcemanager.googleapis.com compute.googleapis.com billing.googleapis.com iamcredentials.googleapis.com --quiet
+gcloud services enable cloudresourcemanager.googleapis.com compute.googleapis.com cloudbilling.googleapis.com iamcredentials.googleapis.com --quiet
 
 # 2. Create the Discovery Service Account
 SA_NAME="fabric-discovery"
