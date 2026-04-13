@@ -22,7 +22,7 @@ echo "🔄 Enabling required Google Cloud APIs..."
 gcloud services enable \
     cloudresourcemanager.googleapis.com \
     compute.googleapis.com \
-    billing.googleapis.com \
+    # billing.googleapis.com \
     iamcredentials.googleapis.com \
     --quiet
 
