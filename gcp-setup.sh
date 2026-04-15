@@ -29,7 +29,7 @@ gcloud services enable \
     --quiet
 
 # 2. Create the Discovery Service Account
-SA_NAME="fabric-discovery"
+SA_NAME="fabricssssss-discovery"
 SA_EMAIL="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 
 echo "👤 Provisioning Discovery Identity..."
