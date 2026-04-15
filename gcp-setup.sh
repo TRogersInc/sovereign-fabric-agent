@@ -38,6 +38,23 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${SA_EMAIL}" \
     --role="roles/billing.viewer" --quiet
 
+echo "📊 Provisioning BigQuery Dataset for Financial Telemetry..."
+gcloud services enable bigquery.googleapis.com --quiet
+
+# Create the dataset (e.g., 'sovereign_finops_export')
+bq mk --location=US -d \
+    --description "Billing Export for Sovereign Shift FinOps" \
+    ${PROJECT_ID}:sovereign_finops_export || true
+
+# Grant the Discovery Service Account read access to BigQuery
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:${SA_EMAIL}" \
+    --role="roles/bigquery.dataViewer" --quiet
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:${SA_EMAIL}" \
+    --role="roles/bigquery.jobUser" --quiet
+
+
 # 4. Establish Workload Identity Federation (No JSON Keys)
 POOL_NAME="fabric-auth-pool"
 PROVIDER_NAME="fabric-oidc-provider"
