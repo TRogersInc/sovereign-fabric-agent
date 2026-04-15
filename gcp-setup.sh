@@ -81,7 +81,7 @@ gcloud iam workload-identity-pools providers create-oidc $PROVIDER_NAME \
     --location="global" \
     --workload-identity-pool=$POOL_NAME \
     --display-name="Fabric OIDC Provider" \
-    --issuer-uri="https://api.yourfabric.ai" \
+    --issuer-uri="http://localhost:8000" \
     --attribute-mapping="google.subject=assertion.sub" \
     --quiet || true
 
@@ -98,7 +98,7 @@ gcloud iam service-accounts add-iam-policy-binding $SA_EMAIL \
 # 📡 THE CALLBACK
 # ==========================================
 echo "📡 Transmitting Handshake to Command Center..."
-curl -X POST "https://api.yourfabric.ai/v1/webhooks/gcp-connect" \
+curl -X POST "http://localhost:8000/api/v1/webhooks/gcp-connect" \
      -H "Content-Type: application/json" \
      -H "Authorization: Bearer ${EXTERNAL_ID}" \
      -d '{
