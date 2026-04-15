@@ -1,11 +1,11 @@
 #!/bin/bash
 # agent/setup.sh
-# Autonomous Cloud Fabric - GCP Zero-Touch Onboarding
+# Sovereign Shift - GCP Zero-Touch Onboarding (FinOps Edition)
 
 set -e # Exit immediately if a command exits with a non-zero status.
 
 echo "========================================================="
-echo "🛡️ Initializing Sovereign Cloud Discovery Handshake..."
+echo "🛡️ Initializing Sovereign Shift Discovery Handshake..."
 echo "========================================================="
 
 # The EXTERNAL_ID is passed securely via the Cloud Shell URL environment variables
@@ -19,18 +19,25 @@ read -p "Enter the GCP Project ID to Audit: " PROJECT_ID
 gcloud config set project $PROJECT_ID
 
 echo "🔄 Enabling required Google Cloud APIs..."
-gcloud services enable cloudresourcemanager.googleapis.com compute.googleapis.com cloudbilling.googleapis.com iamcredentials.googleapis.com --quiet
+# Note: cloudbilling.googleapis.com is the correct API name for Billing
+gcloud services enable \
+    cloudresourcemanager.googleapis.com \
+    compute.googleapis.com \
+    cloudbilling.googleapis.com \
+    iamcredentials.googleapis.com \
+    bigquery.googleapis.com \
+    --quiet
 
 # 2. Create the Discovery Service Account
 SA_NAME="fabric-discovery"
 SA_EMAIL="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 
-echo "👤 Provisioning Read-Only Discovery Identity..."
+echo "👤 Provisioning Discovery Identity..."
 gcloud iam service-accounts create $SA_NAME \
-    --display-name="Autonomous Fabric Discovery Agent" \
+    --display-name="Sovereign Shift Discovery Agent" \
     --quiet || true # Ignore if already exists
 
-# 3. Bind strict, read-only roles
+# 3. Bind strict, read-only infrastructure roles
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${SA_EMAIL}" \
     --role="roles/viewer" --quiet
@@ -38,15 +45,19 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${SA_EMAIL}" \
     --role="roles/billing.viewer" --quiet
 
+# ==========================================
+# 📊 NEW: FINOPS & BIGQUERY TELEMETRY SETUP
+# ==========================================
+DATASET_NAME="sovereign_finops_export"
+
 echo "📊 Provisioning BigQuery Dataset for Financial Telemetry..."
-gcloud services enable bigquery.googleapis.com --quiet
-
-# Create the dataset (e.g., 'sovereign_finops_export')
+# Create the dataset if it doesn't exist. Using US multi-region as a default.
 bq mk --location=US -d \
-    --description "Billing Export for Sovereign Shift FinOps" \
-    ${PROJECT_ID}:sovereign_finops_export || true
+    --description "Billing Export for Sovereign Shift FinOps Engine" \
+    ${PROJECT_ID}:${DATASET_NAME} || true
 
-# Grant the Discovery Service Account read access to BigQuery
+echo "🔐 Granting Financial Data Access..."
+# Allow the agent to run queries and read the billing data
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${SA_EMAIL}" \
     --role="roles/bigquery.dataViewer" --quiet
@@ -54,8 +65,9 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${SA_EMAIL}" \
     --role="roles/bigquery.jobUser" --quiet
 
-
-# 4. Establish Workload Identity Federation (No JSON Keys)
+# ==========================================
+# 🔐 WORKLOAD IDENTITY FEDERATION
+# ==========================================
 POOL_NAME="fabric-auth-pool"
 PROVIDER_NAME="fabric-oidc-provider"
 
@@ -69,11 +81,11 @@ gcloud iam workload-identity-pools providers create-oidc $PROVIDER_NAME \
     --location="global" \
     --workload-identity-pool=$POOL_NAME \
     --display-name="Fabric OIDC Provider" \
-    --issuer-uri="http://localhost:8000" \
+    --issuer-uri="https://api.yourfabric.ai" \
     --attribute-mapping="google.subject=assertion.sub" \
     --quiet || true
 
-# 5. Bind the WIF Provider to the Service Account using the EXTERNAL_ID
+# Bind the WIF Provider to the Service Account using the EXTERNAL_ID
 PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
 WIF_SUBJECT="principal://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL_NAME}/subject/${EXTERNAL_ID}"
 
@@ -82,9 +94,11 @@ gcloud iam service-accounts add-iam-policy-binding $SA_EMAIL \
     --member="${WIF_SUBJECT}" \
     --quiet
 
-# 6. Execute the Callback Webhook to the Backend
+# ==========================================
+# 📡 THE CALLBACK
+# ==========================================
 echo "📡 Transmitting Handshake to Command Center..."
-curl -X POST "http://localhost:8000/api/v1/webhooks/gcp-connect" \
+curl -X POST "https://api.yourfabric.ai/v1/webhooks/gcp-connect" \
      -H "Content-Type: application/json" \
      -H "Authorization: Bearer ${EXTERNAL_ID}" \
      -d '{
@@ -92,9 +106,11 @@ curl -X POST "http://localhost:8000/api/v1/webhooks/gcp-connect" \
            "project_number": "'"${PROJECT_NUMBER}"'",
            "service_account": "'"${SA_EMAIL}"'",
            "pool_name": "'"${POOL_NAME}"'",
-           "provider_name": "'"${PROVIDER_NAME}"'"
+           "provider_name": "'"${PROVIDER_NAME}"'",
+           "bigquery_dataset": "'"${PROJECT_ID}:${DATASET_NAME}"'"
          }'
 
 echo ""
 echo "✅ Connection Established Successfully."
-echo "You may now close this terminal and return to your Fabric Dashboard."
+echo "⚠️ FINAL STEP REQUIRED: Please go to GCP Console -> Billing -> Billing Export and link your active Billing Account to the new '${DATASET_NAME}' dataset."
+echo "You may now close this terminal and return to your Dashboard."
