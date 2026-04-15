@@ -44,12 +44,8 @@ echo "⏳ Waiting 15 seconds for Google Cloud IAM propagation..."
 sleep 15
 
 # 3. Bind strict, read-only infrastructure roles
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:${SA_EMAIL}" \
-    --role="roles/viewer" --quiet
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:${SA_EMAIL}" \
-    --role="roles/billing.viewer" --quiet
+gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA_EMAIL}" --role="roles/viewer" --quiet
+gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA_EMAIL}" --role="roles/billing.viewer" --quiet
 
 # ==========================================
 # 📊 NEW: FINOPS & BIGQUERY TELEMETRY SETUP
