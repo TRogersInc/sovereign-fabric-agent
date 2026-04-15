@@ -29,7 +29,7 @@ gcloud services enable \
     --quiet
 
 # 2. Create the Discovery Service Account
-SA_NAME="fabricssssss-discovery"
+SA_NAME="fabric-discovery"
 SA_EMAIL="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 
 echo "👤 Provisioning Discovery Identity..."
@@ -45,7 +45,6 @@ sleep 15
 
 # 3. Bind strict, read-only infrastructure roles
 gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA_EMAIL}" --role="roles/viewer" --quiet
-gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA_EMAIL}" --role="roles/billing.viewer" --quiet
 
 # ==========================================
 # 📊 NEW: FINOPS & BIGQUERY TELEMETRY SETUP
