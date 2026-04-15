@@ -37,6 +37,12 @@ gcloud iam service-accounts create $SA_NAME \
     --display-name="Sovereign Shift Discovery Agent" \
     --quiet || true # Ignore if already exists
 
+# ==========================================
+# ⏳ THE FIX: Wait for IAM Propagation
+# ==========================================
+echo "⏳ Waiting 15 seconds for Google Cloud IAM propagation..."
+sleep 15
+
 # 3. Bind strict, read-only infrastructure roles
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${SA_EMAIL}" \
