@@ -8,9 +8,24 @@ echo "========================================================="
 echo "🛡️ Initializing Sovereign Shift Discovery Handshake..."
 echo "========================================================="
 
-# The EXTERNAL_ID is passed securely via the Cloud Shell URL environment variables
+# Accept EXTERNAL_ID from CLI as EXTERNAL_ID=<value> or --external-id <value>
+for arg in "$@"; do
+    case "$arg" in
+        EXTERNAL_ID=*)
+            export EXTERNAL_ID="${arg#EXTERNAL_ID=}"
+            ;;
+    esac
+done
+
+if [ -z "${EXTERNAL_ID:-}" ] && [ "$1" = "--external-id" ] && [ -n "${2:-}" ]; then
+    export EXTERNAL_ID="$2"
+fi
+
+# The EXTERNAL_ID must be available as an environment variable
 if [ -z "$EXTERNAL_ID" ]; then
     echo "❌ ERROR: Security token (EXTERNAL_ID) missing. Aborting."
+    echo "Usage: ./gcp-setup.sh EXTERNAL_ID=<token>"
+    echo "   or: ./gcp-setup.sh --external-id <token>"
     exit 1
 fi
 
